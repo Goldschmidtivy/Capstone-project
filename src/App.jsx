@@ -1,23 +1,58 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Login from "./pages/login";
-import Signup from "./pages/signup";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
-import UserDashboard from "./pages/UserDashboard";
+import AddSamples from "./pages/addSamples";
 import SampleDetails from "./pages/SampleDetails";
-import Home from "./pages/home";
+import EditSample from "./pages/EditSample";
+import UserDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
+
+        {/* Home */}
         <Route path="/" element={<Home />} />
+
+        {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/user" element={<UserDashboard />} />
-        <Route path="/samples/:id" element={<SampleDetails />} />
+
+        {/* Admin */}
+        <Route
+          path="/admin"
+          element={<AdminDashboard />}
+        />
+
+        <Route
+          path="/admin/add-sample"
+          element={<AddSamples />}
+        />
+
+        {/* User */}
+        <Route
+          path="/user"
+          element={<UserDashboard />}
+        />
+
+        {/* Sample details */}
+        <Route
+          path="/samples/:id"
+          element={<SampleDetails />}
+        />
+
+        {/* Edit sample */}
+        <Route
+          path="/samples/:id/edit"
+          element={<EditSample />}
+        />
+
       </Routes>
+
     </BrowserRouter>
   );
 }

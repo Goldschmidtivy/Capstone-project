@@ -2,120 +2,91 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 function UserDashboard() {
+
   const navigate = useNavigate();
 
-  // =========================================
-  // GET LOGGED-IN USER
-  // =========================================
 
-  const savedUser = localStorage.getItem("loggedInUser");
+  /* =========================
+     USER
+  ========================== */
+
+  const savedUser = localStorage.getItem(
+    "loggedInUser"
+  );
 
   const user = savedUser
     ? JSON.parse(savedUser)
     : null;
 
 
-  // =========================================
-  // LOAD WATER SAMPLES
-  // =========================================
+  /* =========================
+     SAMPLES
+  ========================== */
 
-  const [samples] = useState(() => {
-    const savedSamples =
-      localStorage.getItem("waterSamples");
+  const savedSamples = localStorage.getItem(
+    "waterSamples"
+  );
 
-    if (!savedSamples) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedSamples);
-    } catch (error) {
-      console.error(
-        "Could not load water samples:",
-        error
-      );
-
-      return [];
-    }
-  });
+  const samples = savedSamples
+    ? JSON.parse(savedSamples)
+    : [];
 
 
-  // =========================================
-  // SEARCH
-  // =========================================
+  /* =========================
+     SEARCH
+  ========================== */
 
   const [search, setSearch] = useState("");
 
 
-  // =========================================
-  // FILTER SAMPLES
-  // =========================================
-
   const filteredSamples = samples.filter(
     (sample) => {
-      const searchText =
-        search.toLowerCase().trim();
 
-      if (!searchText) {
-        return true;
-      }
+      const searchText =
+        search.toLowerCase();
+
 
       return (
-        String(sample.sampleId || "")
-          .toLowerCase()
+        sample.sampleId
+          ?.toLowerCase()
           .includes(searchText) ||
 
-        String(sample.location || "")
-          .toLowerCase()
+        sample.location
+          ?.toLowerCase()
           .includes(searchText) ||
 
-        String(sample.waterSource || "")
-          .toLowerCase()
+        sample.waterSource
+          ?.toLowerCase()
           .includes(searchText)
       );
+
     }
   );
 
 
-  // =========================================
-  // LOGOUT
-  // =========================================
+  /* =========================
+     LOGOUT
+  ========================== */
 
   const handleLogout = () => {
-    localStorage.removeItem("loggedInUser");
+
+    localStorage.removeItem(
+      "loggedInUser"
+    );
 
     navigate("/login");
+
   };
 
 
-  // =========================================
-  // UNIQUE SOURCES
-  // =========================================
-
-  const numberOfSources = new Set(
-    samples
-      .map((sample) => sample.waterSource)
-      .filter(Boolean)
-  ).size;
-
-
-  // =========================================
-  // UNIQUE LOCATIONS
-  // =========================================
-
-  const numberOfLocations = new Set(
-    samples
-      .map((sample) => sample.location)
-      .filter(Boolean)
-  ).size;
-
-
   return (
+
     <div className="min-h-screen bg-slate-50">
 
-      {/* =====================================
+
+      {/* =========================
           NAVBAR
-      ====================================== */}
+      ========================== */}
 
       <header className="bg-white border-b border-slate-200">
 
@@ -140,7 +111,7 @@ function UserDashboard() {
               </h1>
 
               <p className="text-xs text-slate-400">
-                Water Quality Management
+                Water Quality
               </p>
 
             </div>
@@ -148,7 +119,7 @@ function UserDashboard() {
           </Link>
 
 
-          {/* USER INFORMATION */}
+          {/* USER */}
 
           <div className="flex items-center gap-4">
 
@@ -156,21 +127,15 @@ function UserDashboard() {
             <div className="hidden text-right sm:block">
 
               <p className="text-sm font-semibold text-slate-700">
-
                 {user?.name || "User"}
-
               </p>
 
               <p className="text-xs text-slate-400">
-
-                {user?.email || "User account"}
-
+                Public Viewer
               </p>
 
             </div>
 
-
-            {/* PROFILE CIRCLE */}
 
             <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-cyan-100 text-cyan-700">
 
@@ -182,8 +147,6 @@ function UserDashboard() {
 
             </div>
 
-
-            {/* LOGOUT */}
 
             <button
               onClick={handleLogout}
@@ -199,20 +162,19 @@ function UserDashboard() {
       </header>
 
 
-      {/* =====================================
+
+      {/* =========================
           MAIN
-      ====================================== */}
+      ========================== */}
 
       <main className="max-w-6xl px-6 py-10 mx-auto">
 
 
-        {/* ===================================
-            WELCOME
-        ==================================== */}
+        {/* WELCOME */}
 
         <div className="mb-8">
 
-          <p className="text-sm font-semibold tracking-wide text-cyan-600">
+          <p className="text-sm font-semibold text-cyan-600">
             WATER QUALITY DATA
           </p>
 
@@ -225,18 +187,17 @@ function UserDashboard() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-
             Explore available water quality
             samples and their measurements.
-
           </p>
 
         </div>
 
 
-        {/* ===================================
-            SUMMARY CARDS
-        ==================================== */}
+
+        {/* =========================
+            SUMMARY
+        ========================== */}
 
         <div className="grid gap-4 mb-8 sm:grid-cols-3">
 
@@ -250,37 +211,50 @@ function UserDashboard() {
 
           <SummaryCard
             title="Water Sources"
-            value={numberOfSources}
+            value={
+              new Set(
+                samples.map(
+                  (sample) =>
+                    sample.waterSource
+                )
+              ).size
+            }
             icon="💧"
           />
 
 
           <SummaryCard
             title="Locations"
-            value={numberOfLocations}
+            value={
+              new Set(
+                samples.map(
+                  (sample) =>
+                    sample.location
+                )
+              ).size
+            }
             icon="📍"
           />
 
         </div>
 
 
-        {/* ===================================
+
+        {/* =========================
             SEARCH
-        ==================================== */}
+        ========================== */}
 
         <div className="p-5 mb-6 bg-white border rounded-2xl border-slate-200">
 
           <label className="block mb-2 text-sm font-semibold text-slate-700">
-            Search Water Samples
+            Search water samples
           </label>
-
 
           <div className="relative">
 
             <span className="absolute -translate-y-1/2 left-4 top-1/2">
               🔍
             </span>
-
 
             <input
               type="text"
@@ -297,71 +271,55 @@ function UserDashboard() {
         </div>
 
 
-        {/* ===================================
-            TABLE
-        ==================================== */}
+
+        {/* =========================
+            SAMPLES
+        ========================== */}
 
         <div className="overflow-hidden bg-white border rounded-2xl border-slate-200">
 
 
-          {/* TABLE HEADER */}
-
           <div className="px-6 py-5 border-b border-slate-200">
 
             <h2 className="font-bold text-slate-800">
-              Available Water Samples
+              Available Samples
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-
               {filteredSamples.length} sample
               {filteredSamples.length !== 1
                 ? "s"
-                : ""}
-
+                : ""
+              } found
             </p>
 
           </div>
 
 
-          {/* =================================
-              NO RESULTS
-          ================================== */}
 
           {filteredSamples.length === 0 ? (
 
             <div className="px-6 py-16 text-center">
 
-              <div className="mb-4 text-5xl">
-                💧
+              <div className="mb-4 text-4xl">
+                🔍
               </div>
 
               <h3 className="font-semibold text-slate-700">
                 No samples found
               </h3>
 
-              <p className="max-w-md mx-auto mt-2 text-sm text-slate-500">
-
-                {samples.length === 0
-                  ? "There are currently no water samples available."
-                  : "Try searching with a different keyword."}
-
+              <p className="mt-2 text-sm text-slate-500">
+                Try a different search.
               </p>
 
             </div>
 
           ) : (
 
-            /* =================================
-               DATA TABLE
-            ================================== */
-
             <div className="overflow-x-auto">
 
               <table className="w-full">
-
-
-                {/* HEAD */}
 
                 <thead>
 
@@ -396,8 +354,6 @@ function UserDashboard() {
                 </thead>
 
 
-                {/* BODY */}
-
                 <tbody className="divide-y divide-slate-100">
 
                   {filteredSamples.map(
@@ -405,59 +361,38 @@ function UserDashboard() {
 
                       <tr
                         key={sample.id}
-                        className="transition hover:bg-slate-50"
+                        className="hover:bg-slate-50"
                       >
-
-
-                        {/* SAMPLE ID */}
 
                         <td className="px-6 py-5">
 
                           <p className="font-semibold text-slate-800">
-
-                            {sample.sampleId || "—"}
-
+                            {sample.sampleId}
                           </p>
 
                         </td>
 
 
-                        {/* SOURCE */}
-
                         <td className="px-6 py-5">
 
                           <span className="px-3 py-1 text-xs font-medium text-blue-700 rounded-full bg-blue-50">
 
-                            {sample.waterSource || "—"}
+                            {sample.waterSource}
 
                           </span>
 
                         </td>
 
-
-                        {/* LOCATION */}
 
                         <td className="px-6 py-5 text-sm text-slate-600">
-
-                          {sample.location || "—"}
-
+                          {sample.location}
                         </td>
 
 
-                        {/* PH */}
-
-                        <td className="px-6 py-5">
-
-                          <span className="font-semibold text-slate-700">
-
-                            {sample.ph || "—"}
-
-                          </span>
-
+                        <td className="px-6 py-5 font-semibold text-slate-700">
+                          {sample.ph || "—"}
                         </td>
 
-
-                        {/* TURBIDITY */}
 
                         <td className="px-6 py-5 text-sm text-slate-600">
 
@@ -467,8 +402,6 @@ function UserDashboard() {
 
                         </td>
 
-
-                        {/* ACTION */}
 
                         <td className="px-6 py-5">
 
@@ -499,13 +432,14 @@ function UserDashboard() {
       </main>
 
     </div>
+
   );
 }
 
 
-/* =========================================
+/* =========================
    SUMMARY CARD
-========================================= */
+========================= */
 
 function SummaryCard({
   title,
@@ -529,7 +463,6 @@ function SummaryCard({
 
       </div>
 
-
       <div className="flex items-center justify-center w-11 h-11 text-xl rounded-xl bg-cyan-50">
         {icon}
       </div>
@@ -538,6 +471,5 @@ function SummaryCard({
 
   );
 }
-
 
 export default UserDashboard;
