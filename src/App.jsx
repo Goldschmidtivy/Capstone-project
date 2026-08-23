@@ -7,7 +7,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AddSamples from "./pages/addSamples";
 import SampleDetails from "./pages/SampleDetails";
 import EditSample from "./pages/EditSample";
-import UserDashboard from "./pages/AdminDashboard";
+import UserDashboard from "./pages/userDasboard";
 
 function App() {
   return (
