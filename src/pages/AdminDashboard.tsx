@@ -4,9 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 function UserDashboard() {
   const navigate = useNavigate();
 
-  // =========================================
+  
   // GET LOGGED-IN USER
-  // =========================================
+  
+  
 
   const savedUser = localStorage.getItem("loggedInUser");
 
@@ -15,9 +16,8 @@ function UserDashboard() {
     : null;
 
 
-  // =========================================
-  // LOAD WATER SAMPLES
-  // =========================================
+
+  // LOAD WATER SAMPLE
 
   const [samples] = useState(() => {
     const savedSamples =
@@ -40,16 +40,16 @@ function UserDashboard() {
   });
 
 
-  // =========================================
+  
   // SEARCH
-  // =========================================
+  
 
   const [search, setSearch] = useState("");
 
 
-  // =========================================
+  
   // FILTER SAMPLES
-  // =========================================
+
 
   const filteredSamples = samples.filter(
     (sample) => {
@@ -77,9 +77,9 @@ function UserDashboard() {
   );
 
 
-  // =========================================
+
   // LOGOUT
-  // =========================================
+
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
@@ -88,9 +88,7 @@ function UserDashboard() {
   };
 
 
-  // =========================================
   // UNIQUE SOURCES
-  // =========================================
 
   const numberOfSources = new Set(
     samples
@@ -99,9 +97,8 @@ function UserDashboard() {
   ).size;
 
 
-  // =========================================
+  
   // UNIQUE LOCATIONS
-  // =========================================
 
   const numberOfLocations = new Set(
     samples
@@ -113,16 +110,16 @@ function UserDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* =====================================
+
           NAVBAR
-      ====================================== */}
+
 
       <header className="bg-white border-b border-slate-200">
 
         <div className="flex items-center justify-between max-w-6xl px-6 py-4 mx-auto">
 
 
-          {/* LOGO */}
+           LOGO
 
           <Link
             to="/user"
@@ -148,7 +145,7 @@ function UserDashboard() {
           </Link>
 
 
-          {/* USER INFORMATION */}
+          USER INFORMATION
 
           <div className="flex items-center gap-4">
 
@@ -170,7 +167,7 @@ function UserDashboard() {
             </div>
 
 
-            {/* PROFILE CIRCLE */}
+             PROFILE CIRCLE
 
             <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-cyan-100 text-cyan-700">
 
@@ -183,7 +180,7 @@ function UserDashboard() {
             </div>
 
 
-            {/* LOGOUT */}
+             LOGOUT
 
             <button
               onClick={handleLogout}
@@ -199,16 +196,14 @@ function UserDashboard() {
       </header>
 
 
-      {/* =====================================
           MAIN
-      ====================================== */}
 
       <main className="max-w-6xl px-6 py-10 mx-auto">
 
 
-        {/* ===================================
+        
             WELCOME
-        ==================================== */}
+        
 
         <div className="mb-8">
 
@@ -234,9 +229,9 @@ function UserDashboard() {
         </div>
 
 
-        {/* ===================================
+        
             SUMMARY CARDS
-        ==================================== */}
+        
 
         <div className="grid gap-4 mb-8 sm:grid-cols-3">
 
@@ -264,9 +259,9 @@ function UserDashboard() {
         </div>
 
 
-        {/* ===================================
+        
             SEARCH
-        ==================================== */}
+        
 
         <div className="p-5 mb-6 bg-white border rounded-2xl border-slate-200">
 
@@ -297,14 +292,14 @@ function UserDashboard() {
         </div>
 
 
-        {/* ===================================
+        
             TABLE
-        ==================================== */}
+        
 
         <div className="overflow-hidden bg-white border rounded-2xl border-slate-200">
 
 
-          {/* TABLE HEADER */}
+           TABLE HEADER 
 
           <div className="px-6 py-5 border-b border-slate-200">
 
@@ -324,9 +319,9 @@ function UserDashboard() {
           </div>
 
 
-          {/* =================================
+          
               NO RESULTS
-          ================================== */}
+          
 
           {filteredSamples.length === 0 ? (
 
@@ -361,7 +356,7 @@ function UserDashboard() {
               <table className="w-full">
 
 
-                {/* HEAD */}
+                HEAD
 
                 <thead>
 
@@ -396,7 +391,7 @@ function UserDashboard() {
                 </thead>
 
 
-                {/* BODY */}
+                 BODY
 
                 <tbody className="divide-y divide-slate-100">
 
@@ -409,7 +404,7 @@ function UserDashboard() {
                       >
 
 
-                        {/* SAMPLE ID */}
+                       SAMPLE ID
 
                         <td className="px-6 py-5">
 
@@ -422,7 +417,7 @@ function UserDashboard() {
                         </td>
 
 
-                        {/* SOURCE */}
+                         SOURCE
 
                         <td className="px-6 py-5">
 
@@ -435,7 +430,7 @@ function UserDashboard() {
                         </td>
 
 
-                        {/* LOCATION */}
+                         LOCATION
 
                         <td className="px-6 py-5 text-sm text-slate-600">
 
@@ -444,7 +439,7 @@ function UserDashboard() {
                         </td>
 
 
-                        {/* PH */}
+                         PH
 
                         <td className="px-6 py-5">
 
@@ -457,7 +452,7 @@ function UserDashboard() {
                         </td>
 
 
-                        {/* TURBIDITY */}
+                         TURBIDITY
 
                         <td className="px-6 py-5 text-sm text-slate-600">
 
@@ -468,7 +463,7 @@ function UserDashboard() {
                         </td>
 
 
-                        {/* ACTION */}
+                         ACTION
 
                         <td className="px-6 py-5">
 
@@ -503,9 +498,9 @@ function UserDashboard() {
 }
 
 
-/* =========================================
+
    SUMMARY CARD
-========================================= */
+
 
 function SummaryCard({
   title,
