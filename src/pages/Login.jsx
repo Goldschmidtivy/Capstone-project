@@ -6,7 +6,7 @@ const API_URL = "https://water-quality-backend-5br2.onrender.com";
 export default function Login() {
   const navigate = useNavigate();
 
-  const [email, setEmail] =  useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export default function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          email: email.trim(),
           password,
         }),
       });
@@ -36,46 +36,30 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Login failed."
-        );
+        throw new Error(data.message || "Login failed.");
       }
 
-      /*
-        Check that the selected account type
-        matches the actual role from the database.
-      */
+      if (!data.user || !data.user.role) {
+        throw new Error("Login response did not contain user information.");
+      }
 
       if (data.user.role !== role) {
         alert(
           `This account is registered as ${data.user.role}. Please select ${data.user.role} to continue.`
         );
-
         return;
       }
 
-      /*
-        Save the JWT token
-      */
+      // Save authentication token
+      localStorage.setItem("authToken", data.token);
 
-      localStorage.setItem(
-        "authToken",
-        data.token
-      );
-
-      /*
-        Save the logged-in user
-      */
-
+      // Save logged-in user
       localStorage.setItem(
         "loggedInUser",
         JSON.stringify(data.user)
       );
 
-      /*
-        Redirect according to the actual role
-      */
-
+      // Redirect according to role
       if (data.user.role === "admin") {
         navigate("/admin");
       } else {
@@ -97,9 +81,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen bg-slate-50">
 
-      {/* =================================
-          LEFT SIDE
-      ================================= */}
+      {/* LEFT SIDE */}
 
       <div className="relative hidden w-1/2 overflow-hidden bg-slate-900 lg:flex">
 
@@ -128,20 +110,15 @@ export default function Login() {
           </div>
 
           <h2 className="max-w-lg text-4xl font-bold leading-tight">
-
             Monitor water quality.
             <br />
-
             Protect our water resources.
-
           </h2>
 
           <p className="max-w-lg mt-6 text-lg leading-relaxed text-cyan-100">
-
             Access water quality information,
             manage samples, and make informed
             decisions about our water resources.
-
           </p>
 
         </div>
@@ -149,9 +126,7 @@ export default function Login() {
       </div>
 
 
-      {/* =================================
-          RIGHT SIDE
-      ================================= */}
+      {/* RIGHT SIDE */}
 
       <div className="flex items-center justify-center w-full px-6 py-12 lg:w-1/2">
 
@@ -191,7 +166,7 @@ export default function Login() {
           </div>
 
 
-          {/* FORM */}
+          {/* LOGIN FORM */}
 
           <form
             onSubmit={handleSubmit}
@@ -209,10 +184,9 @@ export default function Login() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                autoComplete="email"
                 className="w-full px-4 py-3 bg-white border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
               />
 
@@ -230,10 +204,9 @@ export default function Login() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 className="w-full px-4 py-3 bg-white border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
               />
 
@@ -308,7 +281,7 @@ export default function Login() {
             </div>
 
 
-            {/* BUTTON */}
+            {/* SIGN IN BUTTON */}
 
             <button
               type="submit"
