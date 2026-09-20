@@ -6,7 +6,7 @@ import EditSample from "./pages/EditSample";
 import UserDashboard from "./pages/userDasboard";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 
 function App() {
   return (
