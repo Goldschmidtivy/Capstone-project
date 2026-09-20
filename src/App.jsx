@@ -1,13 +1,12 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-import Home from "./pages/Home";
-import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
 import AddSamples from "./pages/addSamples";
 import SampleDetails from "./pages/SampleDetails";
 import EditSample from "./pages/EditSample";
 import UserDashboard from "./pages/userDasboard";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import Login from "./pages/login";
 
 function App() {
   return (
