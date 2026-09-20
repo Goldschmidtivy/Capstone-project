@@ -1,13 +1,8 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
-function UserDashboard() {
+function AdminDashboard() {
   const navigate = useNavigate();
-
-  
-  // GET LOGGED-IN USER
-  
-  
 
   const savedUser = localStorage.getItem("loggedInUser");
 
@@ -15,13 +10,8 @@ function UserDashboard() {
     ? JSON.parse(savedUser)
     : null;
 
-
-
-  // LOAD WATER SAMPLE
-
-  const [samples] = useState(() => {
-    const savedSamples =
-      localStorage.getItem("waterSamples");
+  const [samples, setSamples] = useState(() => {
+    const savedSamples = localStorage.getItem("waterSamples");
 
     if (!savedSamples) {
       return [];
@@ -29,100 +19,120 @@ function UserDashboard() {
 
     try {
       return JSON.parse(savedSamples);
-    } catch (error) {
-      console.error(
-        "Could not load water samples:",
-        error
-      );
-
+    } catch {
       return [];
     }
   });
 
+  const [formData, setFormData] = useState({
+    sampleId: "",
+    waterSource: "",
+    location: "",
+    dateCollected: "",
+    timeCollected: "",
+    temperature: "",
+    turbidity: "",
+    conductivity: "",
+    tds: "",
+    ph: "",
+    dissolvedOxygen: "",
+    nitrate: "",
+    phosphate: "",
+    remarks: "",
+  });
 
-  
-  // SEARCH
-  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  const [search, setSearch] = useState("");
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  
-  // FILTER SAMPLES
-
-
-  const filteredSamples = samples.filter(
-    (sample) => {
-      const searchText =
-        search.toLowerCase().trim();
-
-      if (!searchText) {
-        return true;
-      }
-
-      return (
-        String(sample.sampleId || "")
-          .toLowerCase()
-          .includes(searchText) ||
-
-        String(sample.location || "")
-          .toLowerCase()
-          .includes(searchText) ||
-
-        String(sample.waterSource || "")
-          .toLowerCase()
-          .includes(searchText)
-      );
+    if (
+      !formData.sampleId ||
+      !formData.waterSource ||
+      !formData.location
+    ) {
+      alert("Please fill in the Sample ID, Water Source and Location.");
+      return;
     }
-  );
 
+    const newSample = {
+      ...formData,
+      id: Date.now(),
+    };
 
+    const updatedSamples = [...samples, newSample];
 
-  // LOGOUT
+    setSamples(updatedSamples);
 
+    localStorage.setItem(
+      "waterSamples",
+      JSON.stringify(updatedSamples)
+    );
+
+    alert("Water sample saved successfully.");
+
+    setFormData({
+      sampleId: "",
+      waterSource: "",
+      location: "",
+      dateCollected: "",
+      timeCollected: "",
+      temperature: "",
+      turbidity: "",
+      conductivity: "",
+      tds: "",
+      ph: "",
+      dissolvedOxygen: "",
+      nitrate: "",
+      phosphate: "",
+      remarks: "",
+    });
+  };
+
+  const handleDelete = (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this sample?"
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    const updatedSamples = samples.filter(
+      (sample) => sample.id !== id
+    );
+
+    setSamples(updatedSamples);
+
+    localStorage.setItem(
+      "waterSamples",
+      JSON.stringify(updatedSamples)
+    );
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
-
     navigate("/login");
   };
-
-
-  // UNIQUE SOURCES
-
-  const numberOfSources = new Set(
-    samples
-      .map((sample) => sample.waterSource)
-      .filter(Boolean)
-  ).size;
-
-
-  
-  // UNIQUE LOCATIONS
-
-  const numberOfLocations = new Set(
-    samples
-      .map((sample) => sample.location)
-      .filter(Boolean)
-  ).size;
-
 
   return (
     <div className="min-h-screen bg-slate-50">
 
-
-          NAVBAR
-
+      {/* NAVBAR */}
 
       <header className="bg-white border-b border-slate-200">
 
-        <div className="flex items-center justify-between max-w-6xl px-6 py-4 mx-auto">
-
-
-           LOGO
+        <div className="flex items-center justify-between max-w-7xl px-6 py-4 mx-auto">
 
           <Link
-            to="/user"
+            to="/admin"
             className="flex items-center gap-3"
           >
 
@@ -137,7 +147,7 @@ function UserDashboard() {
               </h1>
 
               <p className="text-xs text-slate-400">
-                Water Quality Management
+                Admin Panel
               </p>
 
             </div>
@@ -145,46 +155,33 @@ function UserDashboard() {
           </Link>
 
 
-          USER INFORMATION
-
           <div className="flex items-center gap-4">
-
 
             <div className="hidden text-right sm:block">
 
               <p className="text-sm font-semibold text-slate-700">
-
-                {user?.name || "User"}
-
+                {user?.name || "Administrator"}
               </p>
 
               <p className="text-xs text-slate-400">
-
-                {user?.email || "User account"}
-
+                {user?.email || "Admin account"}
               </p>
 
             </div>
 
-
-             PROFILE CIRCLE
 
             <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-cyan-100 text-cyan-700">
 
               {user?.name
-                ? user.name
-                    .charAt(0)
-                    .toUpperCase()
-                : "U"}
+                ? user.name.charAt(0).toUpperCase()
+                : "A"}
 
             </div>
 
 
-             LOGOUT
-
             <button
               onClick={handleLogout}
-              className="hidden px-4 py-2 text-sm font-medium border rounded-lg sm:block border-slate-200 text-slate-600 hover:bg-slate-50"
+              className="px-4 py-2 text-sm font-medium border rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50"
             >
               Logout
             </button>
@@ -196,45 +193,33 @@ function UserDashboard() {
       </header>
 
 
-          MAIN
+      {/* MAIN */}
 
-      <main className="max-w-6xl px-6 py-10 mx-auto">
+      <main className="max-w-7xl px-6 py-8 mx-auto">
 
 
-        
-            WELCOME
-        
+        {/* PAGE HEADER */}
 
         <div className="mb-8">
 
           <p className="text-sm font-semibold tracking-wide text-cyan-600">
-            WATER QUALITY DATA
+            ADMINISTRATION
           </p>
 
           <h1 className="mt-1 text-3xl font-bold text-slate-900">
-
-            Welcome,{" "}
-
-            {user?.name || "User"}
-
+            Water Quality Dashboard
           </h1>
 
           <p className="mt-2 text-slate-500">
-
-            Explore available water quality
-            samples and their measurements.
-
+            Add, manage and monitor water quality samples.
           </p>
 
         </div>
 
 
-        
-            SUMMARY CARDS
-        
+        {/* SUMMARY */}
 
         <div className="grid gap-4 mb-8 sm:grid-cols-3">
-
 
           <SummaryCard
             title="Total Samples"
@@ -242,147 +227,353 @@ function UserDashboard() {
             icon="🧪"
           />
 
-
           <SummaryCard
             title="Water Sources"
-            value={numberOfSources}
+            value={
+              new Set(
+                samples
+                  .map((sample) => sample.waterSource)
+                  .filter(Boolean)
+              ).size
+            }
             icon="💧"
           />
 
-
           <SummaryCard
             title="Locations"
-            value={numberOfLocations}
+            value={
+              new Set(
+                samples
+                  .map((sample) => sample.location)
+                  .filter(Boolean)
+              ).size
+            }
             icon="📍"
           />
 
         </div>
 
 
-        
-            SEARCH
-        
+        {/* ADD SAMPLE FORM */}
 
-        <div className="p-5 mb-6 bg-white border rounded-2xl border-slate-200">
+        <section className="p-6 mb-8 bg-white border rounded-2xl border-slate-200">
 
-          <label className="block mb-2 text-sm font-semibold text-slate-700">
-            Search Water Samples
-          </label>
+          <div className="mb-6">
 
-
-          <div className="relative">
-
-            <span className="absolute -translate-y-1/2 left-4 top-1/2">
-              🔍
-            </span>
-
-
-            <input
-              type="text"
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search by sample ID, location or water source..."
-              className="w-full py-3 pl-11 pr-4 border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
-            />
-
-          </div>
-
-        </div>
-
-
-        
-            TABLE
-        
-
-        <div className="overflow-hidden bg-white border rounded-2xl border-slate-200">
-
-
-           TABLE HEADER 
-
-          <div className="px-6 py-5 border-b border-slate-200">
-
-            <h2 className="font-bold text-slate-800">
-              Available Water Samples
+            <h2 className="text-xl font-bold text-slate-800">
+              Add Water Sample
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-
-              {filteredSamples.length} sample
-              {filteredSamples.length !== 1
-                ? "s"
-                : ""}
-
+              Enter the information collected from the water sample.
             </p>
 
           </div>
 
 
-          
-              NO RESULTS
-          
+          <form onSubmit={handleSubmit}>
 
-          {filteredSamples.length === 0 ? (
+            {/* SAMPLE INFORMATION */}
+
+            <div className="mb-8">
+
+              <h3 className="mb-4 text-sm font-bold tracking-wide uppercase text-slate-600">
+                Sample Information
+              </h3>
+
+              <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+
+                <InputField
+                  label="Sample ID"
+                  name="sampleId"
+                  value={formData.sampleId}
+                  onChange={handleChange}
+                  placeholder="e.g. 00011"
+                  required
+                />
+
+                <SelectField
+                  label="Water Source"
+                  name="waterSource"
+                  value={formData.waterSource}
+                  onChange={handleChange}
+                  required
+                  options={[
+                    "River",
+                    "Lake",
+                    "Well",
+                    "Borehole",
+                    "Tap Water",
+                    "Reservoir",
+                    "Stream",
+                    "Other",
+                  ]}
+                />
+
+                <InputField
+                  label="Location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="e.g. Lake Volta"
+                  required
+                />
+
+                <InputField
+                  label="Date Collected"
+                  name="dateCollected"
+                  type="date"
+                  value={formData.dateCollected}
+                  onChange={handleChange}
+                />
+
+                <InputField
+                  label="Time Collected"
+                  name="timeCollected"
+                  type="time"
+                  value={formData.timeCollected}
+                  onChange={handleChange}
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* WATER QUALITY */}
+
+            <div className="mb-8">
+
+              <h3 className="mb-4 text-sm font-bold tracking-wide uppercase text-slate-600">
+                Water Quality Measurements
+              </h3>
+
+              <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+
+                <InputField
+                  label="Temperature"
+                  name="temperature"
+                  type="number"
+                  value={formData.temperature}
+                  onChange={handleChange}
+                  placeholder="e.g. 25"
+                  unit="°C"
+                />
+
+                <InputField
+                  label="pH"
+                  name="ph"
+                  type="number"
+                  step="0.01"
+                  value={formData.ph}
+                  onChange={handleChange}
+                  placeholder="e.g. 7.2"
+                />
+
+                <InputField
+                  label="Turbidity"
+                  name="turbidity"
+                  type="number"
+                  step="0.01"
+                  value={formData.turbidity}
+                  onChange={handleChange}
+                  placeholder="e.g. 3.5"
+                  unit="NTU"
+                />
+
+                <InputField
+                  label="Conductivity"
+                  name="conductivity"
+                  type="number"
+                  step="0.01"
+                  value={formData.conductivity}
+                  onChange={handleChange}
+                  placeholder="e.g. 250"
+                  unit="µS/cm"
+                />
+
+                <InputField
+                  label="Total Dissolved Solids"
+                  name="tds"
+                  type="number"
+                  step="0.01"
+                  value={formData.tds}
+                  onChange={handleChange}
+                  placeholder="e.g. 150"
+                  unit="mg/L"
+                />
+
+                <InputField
+                  label="Dissolved Oxygen"
+                  name="dissolvedOxygen"
+                  type="number"
+                  step="0.01"
+                  value={formData.dissolvedOxygen}
+                  onChange={handleChange}
+                  placeholder="e.g. 6.5"
+                  unit="mg/L"
+                />
+
+                <InputField
+                  label="Nitrate"
+                  name="nitrate"
+                  type="number"
+                  step="0.01"
+                  value={formData.nitrate}
+                  onChange={handleChange}
+                  placeholder="e.g. 5"
+                  unit="mg/L"
+                />
+
+                <InputField
+                  label="Phosphate"
+                  name="phosphate"
+                  type="number"
+                  step="0.01"
+                  value={formData.phosphate}
+                  onChange={handleChange}
+                  placeholder="e.g. 1.2"
+                  unit="mg/L"
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* REMARKS */}
+
+            <div className="mb-6">
+
+              <label className="block mb-2 text-sm font-semibold text-slate-700">
+                Remarks
+              </label>
+
+              <textarea
+                name="remarks"
+                value={formData.remarks}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Enter any observations or comments about the sample..."
+                className="w-full px-4 py-3 border outline-none resize-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+
+            </div>
+
+
+            {/* BUTTONS */}
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    sampleId: "",
+                    waterSource: "",
+                    location: "",
+                    dateCollected: "",
+                    timeCollected: "",
+                    temperature: "",
+                    turbidity: "",
+                    conductivity: "",
+                    tds: "",
+                    ph: "",
+                    dissolvedOxygen: "",
+                    nitrate: "",
+                    phosphate: "",
+                    remarks: "",
+                  })
+                }
+                className="px-5 py-3 font-semibold border rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
+              >
+                Clear
+              </button>
+
+              <button
+                type="submit"
+                className="px-6 py-3 font-semibold text-white transition rounded-xl bg-cyan-600 hover:bg-cyan-700"
+              >
+                Save Water Sample
+              </button>
+
+            </div>
+
+          </form>
+
+        </section>
+
+
+        {/* SAMPLE TABLE */}
+
+        <section className="overflow-hidden bg-white border rounded-2xl border-slate-200">
+
+          <div className="px-6 py-5 border-b border-slate-200">
+
+            <h2 className="text-xl font-bold text-slate-800">
+              Water Samples
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage saved water quality records.
+            </p>
+
+          </div>
+
+
+          {samples.length === 0 ? (
 
             <div className="px-6 py-16 text-center">
 
               <div className="mb-4 text-5xl">
-                💧
+                🧪
               </div>
 
               <h3 className="font-semibold text-slate-700">
-                No samples found
+                No water samples yet
               </h3>
 
-              <p className="max-w-md mx-auto mt-2 text-sm text-slate-500">
-
-                {samples.length === 0
-                  ? "There are currently no water samples available."
-                  : "Try searching with a different keyword."}
-
+              <p className="mt-2 text-sm text-slate-500">
+                Add your first water sample using the form above.
               </p>
 
             </div>
 
           ) : (
 
-            /* =================================
-               DATA TABLE
-            ================================== */
-
             <div className="overflow-x-auto">
 
               <table className="w-full">
-
-
-                HEAD
 
                 <thead>
 
                   <tr className="text-left bg-slate-50">
 
-                    <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
                       Sample ID
                     </th>
 
-                    <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
                       Source
                     </th>
 
-                    <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
                       Location
                     </th>
 
-                    <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
                       pH
                     </th>
 
-                    <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
                       Turbidity
                     </th>
 
-                    <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
+                      Date
+                    </th>
+
+                    <th className="px-5 py-4 text-xs font-semibold uppercase text-slate-500">
                       Action
                     </th>
 
@@ -391,95 +582,79 @@ function UserDashboard() {
                 </thead>
 
 
-                 BODY
-
                 <tbody className="divide-y divide-slate-100">
 
-                  {filteredSamples.map(
-                    (sample) => (
+                  {samples.map((sample) => (
 
-                      <tr
-                        key={sample.id}
-                        className="transition hover:bg-slate-50"
-                      >
+                    <tr
+                      key={sample.id}
+                      className="hover:bg-slate-50"
+                    >
 
+                      <td className="px-5 py-4 font-semibold text-slate-800">
+                        {sample.sampleId}
+                      </td>
 
-                       SAMPLE ID
+                      <td className="px-5 py-4">
 
-                        <td className="px-6 py-5">
+                        <span className="px-3 py-1 text-xs font-medium text-blue-700 rounded-full bg-blue-50">
+                          {sample.waterSource}
+                        </span>
 
-                          <p className="font-semibold text-slate-800">
+                      </td>
 
-                            {sample.sampleId || "—"}
+                      <td className="px-5 py-4 text-sm text-slate-600">
+                        {sample.location}
+                      </td>
 
-                          </p>
+                      <td className="px-5 py-4 font-semibold text-slate-700">
+                        {sample.ph || "—"}
+                      </td>
 
-                        </td>
+                      <td className="px-5 py-4 text-sm text-slate-600">
+                        {sample.turbidity
+                          ? `${sample.turbidity} NTU`
+                          : "—"}
+                      </td>
 
+                      <td className="px-5 py-4 text-sm text-slate-600">
+                        {sample.dateCollected || "—"}
+                      </td>
 
-                         SOURCE
+                      <td className="px-5 py-4">
 
-                        <td className="px-6 py-5">
-
-                          <span className="px-3 py-1 text-xs font-medium text-blue-700 rounded-full bg-blue-50">
-
-                            {sample.waterSource || "—"}
-
-                          </span>
-
-                        </td>
-
-
-                         LOCATION
-
-                        <td className="px-6 py-5 text-sm text-slate-600">
-
-                          {sample.location || "—"}
-
-                        </td>
-
-
-                         PH
-
-                        <td className="px-6 py-5">
-
-                          <span className="font-semibold text-slate-700">
-
-                            {sample.ph || "—"}
-
-                          </span>
-
-                        </td>
-
-
-                         TURBIDITY
-
-                        <td className="px-6 py-5 text-sm text-slate-600">
-
-                          {sample.turbidity
-                            ? `${sample.turbidity} NTU`
-                            : "—"}
-
-                        </td>
-
-
-                         ACTION
-
-                        <td className="px-6 py-5">
+                        <div className="flex gap-2">
 
                           <Link
                             to={`/samples/${sample.id}`}
-                            className="px-4 py-2 text-sm font-semibold text-cyan-700 rounded-lg bg-cyan-50 hover:bg-cyan-100"
+                            className="px-3 py-2 text-xs font-semibold text-cyan-700 rounded-lg bg-cyan-50 hover:bg-cyan-100"
                           >
-                            View Details
+                            View
                           </Link>
 
-                        </td>
+                          <Link
+                            to={`/edit-sample/${sample.id}`}
+                            className="px-3 py-2 text-xs font-semibold text-amber-700 rounded-lg bg-amber-50 hover:bg-amber-100"
+                          >
+                            Edit
+                          </Link>
 
-                      </tr>
+                          <button
+                            onClick={() =>
+                              handleDelete(sample.id)
+                            }
+                            className="px-3 py-2 text-xs font-semibold text-red-700 rounded-lg bg-red-50 hover:bg-red-100"
+                          >
+                            Delete
+                          </button>
 
-                    )
-                  )}
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
 
                 </tbody>
 
@@ -489,7 +664,7 @@ function UserDashboard() {
 
           )}
 
-        </div>
+        </section>
 
       </main>
 
@@ -498,18 +673,127 @@ function UserDashboard() {
 }
 
 
+/* =========================================
+   INPUT FIELD
+========================================= */
 
+function InputField({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  step,
+  unit,
+}) {
+  return (
+    <div>
+
+      <label className="block mb-2 text-sm font-semibold text-slate-700">
+        {label}
+
+        {required && (
+          <span className="ml-1 text-red-500">
+            *
+          </span>
+        )}
+      </label>
+
+      <div className="relative">
+
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          step={step}
+          className={`w-full px-4 py-3 ${
+            unit ? "pr-16" : ""
+          } border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100`}
+        />
+
+        {unit && (
+          <span className="absolute text-xs -translate-y-1/2 right-4 top-1/2 text-slate-400">
+            {unit}
+          </span>
+        )}
+
+      </div>
+
+    </div>
+  );
+}
+
+
+/* =========================================
+   SELECT FIELD
+========================================= */
+
+function SelectField({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+  required = false,
+}) {
+  return (
+    <div>
+
+      <label className="block mb-2 text-sm font-semibold text-slate-700">
+
+        {label}
+
+        {required && (
+          <span className="ml-1 text-red-500">
+            *
+          </span>
+        )}
+
+      </label>
+
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full px-4 py-3 bg-white border outline-none appearance-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+      >
+
+        <option value="">
+          Select water source
+        </option>
+
+        {options.map((option) => (
+          <option
+            key={option}
+            value={option}
+          >
+            {option}
+          </option>
+        ))}
+
+      </select>
+
+    </div>
+  );
+}
+
+
+/* =========================================
    SUMMARY CARD
-
+========================================= */
 
 function SummaryCard({
   title,
   value,
   icon,
 }) {
-
   return (
-
     <div className="flex items-center justify-between p-5 bg-white border rounded-2xl border-slate-200">
 
       <div>
@@ -524,15 +808,12 @@ function SummaryCard({
 
       </div>
 
-
       <div className="flex items-center justify-center w-11 h-11 text-xl rounded-xl bg-cyan-50">
         {icon}
       </div>
 
     </div>
-
   );
 }
 
-
-export default UserDashboard;
+export default AdminDashboard;
