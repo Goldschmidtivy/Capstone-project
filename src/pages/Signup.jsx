@@ -1,144 +1,80 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_URL = "https://water-quality-backend-5br2.onrender.com";
+
 function Signup() {
-
   const navigate = useNavigate();
-
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("user");
+  const [loading, setLoading] = useState(false);
 
-
-  const handleSubmit = (e) => {
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-
-    /*
-      Validation
-    */
-
+    // Validation
     if (!name || !email || !password || !confirmPassword) {
-
       alert("Please complete all fields.");
-
       return;
     }
-
 
     if (password !== confirmPassword) {
-
       alert("Passwords do not match.");
-
       return;
     }
 
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters long.");
+      return;
+    }
 
-    /*
-      Get existing users
-    */
+    try {
+      setLoading(true);
 
-    const savedUsers = localStorage.getItem("users");
+      // Send signup request to backend
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role,
+        }),
+      });
 
-    const users = savedUsers
-      ? JSON.parse(savedUsers)
-      : [];
+      const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to create account"
+        );
+      }
 
-    /*
-      Check if email already exists
-    */
+      alert("Account created successfully! Please sign in.");
 
-    const existingUser = users.find(
-      (user) => user.email === email
-    );
+      // Go to login page
+      navigate("/login");
 
-
-    if (existingUser) {
+    } catch (error) {
+      console.error("Signup error:", error);
 
       alert(
-        "An account with this email already exists."
+        error.message || "Something went wrong while creating your account."
       );
-
-      return;
+    } finally {
+      setLoading(false);
     }
-
-
-    /*
-      Create account
-    */
-
-    const newUser = {
-
-      id: Date.now(),
-
-      name,
-
-      email,
-
-      password,
-
-      role,
-
-    };
-
-
-    /*
-      Save account
-    */
-
-    const updatedUsers = [
-      ...users,
-      newUser,
-    ];
-
-
-    localStorage.setItem(
-      "users",
-      JSON.stringify(updatedUsers)
-    );
-
-
-    /*
-      Automatically log the user in
-    */
-
-    localStorage.setItem(
-      "loggedInUser",
-      JSON.stringify({
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      })
-    );
-
-
-    /*
-      Redirect
-    */
-
-    if (role === "admin") {
-
-      navigate("/admin");
-
-    } else {
-
-      navigate("/user");
-
-    }
-
   };
 
-
   return (
-
     <div className="flex min-h-screen bg-slate-50">
-
 
       {/* =================================
           LEFT
@@ -147,7 +83,6 @@ function Signup() {
       <div className="relative hidden w-1/2 overflow-hidden bg-slate-900 lg:flex">
 
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-700 via-cyan-900 to-slate-950" />
-
 
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
 
@@ -171,25 +106,20 @@ function Signup() {
 
           </div>
 
-
           <h2 className="max-w-lg text-4xl font-bold leading-tight">
             Join the water quality
             monitoring platform.
           </h2>
 
-
           <p className="max-w-lg mt-6 text-lg leading-relaxed text-cyan-100">
-
             Explore water quality information
             and contribute to better water
             resource management.
-
           </p>
 
         </div>
 
       </div>
-
 
 
       {/* =================================
@@ -199,7 +129,6 @@ function Signup() {
       <div className="flex items-center justify-center w-full px-6 py-10 lg:w-1/2">
 
         <div className="w-full max-w-md">
-
 
           {/* TITLE */}
 
@@ -216,14 +145,12 @@ function Signup() {
           </div>
 
 
-
           {/* FORM */}
 
           <form
             onSubmit={handleSubmit}
             className="space-y-4"
           >
-
 
             {/* NAME */}
 
@@ -244,7 +171,6 @@ function Signup() {
               />
 
             </div>
-
 
 
             {/* EMAIL */}
@@ -268,7 +194,6 @@ function Signup() {
             </div>
 
 
-
             {/* PASSWORD */}
 
             <div>
@@ -290,8 +215,7 @@ function Signup() {
             </div>
 
 
-
-            {/* CONFIRM */}
+            {/* CONFIRM PASSWORD */}
 
             <div>
 
@@ -312,7 +236,6 @@ function Signup() {
             </div>
 
 
-
             {/* ROLE */}
 
             <div>
@@ -321,9 +244,9 @@ function Signup() {
                 Account Type
               </label>
 
-
               <div className="grid grid-cols-2 gap-3">
 
+                {/* USER */}
 
                 <button
                   type="button"
@@ -349,6 +272,8 @@ function Signup() {
 
                 </button>
 
+
+                {/* ADMIN */}
 
                 <button
                   type="button"
@@ -379,18 +304,17 @@ function Signup() {
             </div>
 
 
-
             {/* SUBMIT */}
 
             <button
               type="submit"
-              className="w-full py-3.5 font-semibold text-white transition rounded-xl bg-cyan-600 hover:bg-cyan-700"
+              disabled={loading}
+              className="w-full py-3.5 font-semibold text-white transition rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Create Account
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
 
           </form>
-
 
 
           {/* LOGIN */}
@@ -425,8 +349,8 @@ function Signup() {
       </div>
 
     </div>
-
   );
 }
 
 export default Signup;
+

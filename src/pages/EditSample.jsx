@@ -1,32 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+
+const API_URL = "https://water-quality-backend-5br2.onrender.com";
 
 function EditSample() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Get saved samples
-  const savedData = localStorage.getItem("waterSamples");
+  const [existingSample, setExistingSample] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const samples = savedData
-    ? JSON.parse(savedData)
-    : [];
+  // Get one sample from the backend
+  useEffect(() => {
+    const fetchSample = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/samples/${id}`);
 
-  // Find the sample we want to edit
-  const existingSample = samples.find(
-    (sample) => String(sample.id) === String(id)
-  );
+        if (!response.ok) {
+          throw new Error("Water sample not found");
+        }
 
-  // If sample does not exist
-  if (!existingSample) {
+        const data = await response.json();
+        setExistingSample(data);
+      } catch (err) {
+        console.error("Error fetching sample:", err);
+        setError("The sample you are trying to edit does not exist.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSample();
+  }, [id]);
+
+  // Loading
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-lg font-semibold text-slate-600">
+          Loading sample...
+        </div>
+      </div>
+    );
+  }
 
+  // Sample not found
+  if (error || !existingSample) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="p-10 text-center bg-white border shadow-sm rounded-2xl border-slate-200">
-
-          <div className="mb-4 text-5xl">
-            🔍
-          </div>
+          <div className="mb-4 text-5xl">🔍</div>
 
           <h1 className="text-2xl font-bold text-slate-800">
             Sample Not Found
@@ -42,124 +66,116 @@ function EditSample() {
           >
             Back to Dashboard
           </Link>
-
         </div>
-
       </div>
     );
   }
 
-
   return (
     <EditForm
       existingSample={existingSample}
-      samples={samples}
       navigate={navigate}
     />
   );
 }
 
-
 /* =================================
    EDIT FORM
 ================================= */
 
-function EditForm({
-  existingSample,
-  samples,
-  navigate,
-}) {
-
+function EditForm({ existingSample, navigate }) {
   const [formData, setFormData] = useState({
-    sampleId: existingSample.sampleId || "",
     waterSource: existingSample.waterSource || "",
     location: existingSample.location || "",
-    dateCollected: existingSample.dateCollected || "",
+    dateCollected: existingSample.dateCollected
+      ? existingSample.dateCollected.split("T")[0]
+      : "",
     timeCollected: existingSample.timeCollected || "",
     temperature: existingSample.temperature || "",
     turbidity: existingSample.turbidity || "",
     conductivity: existingSample.conductivity || "",
-    tds: existingSample.tds || "",
-    ph: existingSample.ph || "",
+    tds: existingSample.TDS || "",
+    ph: existingSample.pH || "",
     dissolvedOxygen: existingSample.dissolvedOxygen || "",
     nitrate: existingSample.nitrate || "",
     phosphate: existingSample.phosphate || "",
     remarks: existingSample.remarks || "",
   });
 
+  const [saving, setSaving] = useState(false);
 
   const handleChange = (e) => {
-
     const { name, value } = e.target;
 
     setFormData((previous) => ({
       ...previous,
       [name]: value,
     }));
-
   };
 
-
-  const handleSubmit = (e) => {
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setSaving(true);
 
-    // Replace the old sample with the updated one
+    try {
+      const response = await fetch(
+        `${API_URL}/api/samples/${existingSample.sampleId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            location: formData.location,
+            waterSource: formData.waterSource,
+            dateCollected: formData.dateCollected,
+            timeCollected: formData.timeCollected,
+            temperature: formData.temperature,
+            turbidity: formData.turbidity,
+            conductivity: formData.conductivity,
+            TDS: formData.tds,
+            pH: formData.ph,
+            dissolvedOxygen: formData.dissolvedOxygen,
+            nitrate: formData.nitrate,
+            phosphate: formData.phosphate,
+            remarks: formData.remarks,
+          }),
+        }
+      );
 
-    const updatedSamples = samples.map((sample) => {
+      const data = await response.json();
 
-      if (String(sample.id) === String(existingSample.id)) {
-
-        return {
-          ...sample,
-          ...formData,
-        };
-
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update sample");
       }
 
-      return sample;
+      alert("Sample updated successfully!");
 
-    });
+      navigate("/admin");
+    } catch (error) {
+      console.error("Error updating sample:", error);
 
-
-    // Save updated samples
-
-    localStorage.setItem(
-      "waterSamples",
-      JSON.stringify(updatedSamples)
-    );
-
-
-    alert("Sample updated successfully!");
-
-
-    // Return to dashboard
-
-    navigate("/admin");
-
+      alert(
+        error.message || "Failed to update sample. Please try again."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-
   return (
-
     <div className="min-h-screen bg-slate-50">
-
-
       {/* SIDEBAR */}
 
       <aside className="fixed top-0 left-0 z-20 hidden w-64 h-screen bg-slate-900 lg:block">
-
         <div className="flex items-center h-20 px-6 border-b border-slate-800">
-
           <div className="flex items-center gap-3">
-
             <div className="flex items-center justify-center w-10 h-10 text-xl text-white rounded-lg bg-cyan-600">
               💧
             </div>
 
             <div>
-
               <h1 className="font-bold text-white">
                 AquaCheck
               </h1>
@@ -167,16 +183,11 @@ function EditForm({
               <p className="text-xs text-slate-400">
                 Water Quality System
               </p>
-
             </div>
-
           </div>
-
         </div>
 
-
         <nav className="p-4 space-y-2">
-
           <Link
             to="/admin"
             className="flex items-center gap-3 px-4 py-3 text-white rounded-lg bg-cyan-600"
@@ -184,7 +195,6 @@ function EditForm({
             📊
             <span>Dashboard</span>
           </Link>
-
 
           <Link
             to="/admin/add-sample"
@@ -194,7 +204,6 @@ function EditForm({
             <span>Add Sample</span>
           </Link>
 
-
           <Link
             to="/user"
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white"
@@ -202,12 +211,9 @@ function EditForm({
             👥
             <span>User View</span>
           </Link>
-
         </nav>
 
-
         <div className="absolute bottom-0 w-full p-4 border-t border-slate-800">
-
           <Link
             to="/"
             className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white"
@@ -215,23 +221,16 @@ function EditForm({
             ←
             <span>Back to Website</span>
           </Link>
-
         </div>
-
       </aside>
-
 
       {/* MAIN */}
 
       <div className="lg:ml-64">
-
-
         {/* HEADER */}
 
         <header className="flex items-center justify-between h-20 px-6 bg-white border-b border-slate-200">
-
           <div>
-
             <h2 className="text-xl font-bold text-slate-800">
               Edit Water Sample
             </h2>
@@ -239,18 +238,14 @@ function EditForm({
             <p className="hidden text-sm text-slate-500 sm:block">
               Update the information for this sample
             </p>
-
           </div>
 
-
           <div className="flex items-center gap-3">
-
             <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-cyan-100 text-cyan-700">
               A
             </div>
 
             <div className="hidden sm:block">
-
               <p className="text-sm font-semibold text-slate-700">
                 Administrator
               </p>
@@ -258,19 +253,13 @@ function EditForm({
               <p className="text-xs text-slate-400">
                 Admin
               </p>
-
             </div>
-
           </div>
-
         </header>
-
 
         {/* CONTENT */}
 
         <main className="max-w-6xl p-6 mx-auto md:p-8">
-
-
           {/* BACK */}
 
           <Link
@@ -280,58 +269,43 @@ function EditForm({
             ← Back to Dashboard
           </Link>
 
-
           {/* TITLE */}
 
           <div className="mb-8">
-
             <p className="mb-1 text-sm font-medium text-cyan-600">
               EDITING SAMPLE
             </p>
 
             <h1 className="text-3xl font-bold text-slate-900">
-              {existingSample.sampleId}
+              Sample {existingSample.sampleId}
             </h1>
 
             <p className="mt-2 text-slate-500">
               Update the water quality measurements below.
             </p>
-
           </div>
-
 
           <form
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-
-
             {/* SAMPLE INFORMATION */}
 
             <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
               <div className="px-6 py-5 border-b border-slate-200">
-
                 <h2 className="font-bold text-slate-800">
                   Sample Information
                 </h2>
-
               </div>
 
-
               <div className="grid gap-5 p-6 md:grid-cols-2">
-
                 <Input
                   label="Sample ID"
-                  name="sampleId"
-                  value={formData.sampleId}
-                  onChange={handleChange}
-                  required
+                  value={existingSample.sampleId}
+                  disabled
                 />
 
-
                 <div>
-
                   <label className="block mb-2 text-sm font-semibold text-slate-700">
                     Water Source
                   </label>
@@ -343,47 +317,17 @@ function EditForm({
                     required
                     className="w-full px-4 py-3 bg-white border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
                   >
-
-                    <option value="">
-                      Select source
-                    </option>
-
-                    <option value="Borehole">
-                      Borehole
-                    </option>
-
-                    <option value="Well">
-                      Well
-                    </option>
-
-                    <option value="River">
-                      River
-                    </option>
-
-                    <option value="Stream">
-                      Stream
-                    </option>
-
-                    <option value="Lake">
-                      Lake
-                    </option>
-
-                    <option value="Dam">
-                      Dam
-                    </option>
-
-                    <option value="Tap Water">
-                      Tap Water
-                    </option>
-
-                    <option value="Other">
-                      Other
-                    </option>
-
+                    <option value="">Select source</option>
+                    <option value="Borehole">Borehole</option>
+                    <option value="Well">Well</option>
+                    <option value="River">River</option>
+                    <option value="Stream">Stream</option>
+                    <option value="Lake">Lake</option>
+                    <option value="Dam">Dam</option>
+                    <option value="Tap Water">Tap Water</option>
+                    <option value="Other">Other</option>
                   </select>
-
                 </div>
-
 
                 <Input
                   label="Sampling Location"
@@ -392,7 +336,6 @@ function EditForm({
                   onChange={handleChange}
                   required
                 />
-
 
                 <Input
                   label="Date Collected"
@@ -403,7 +346,6 @@ function EditForm({
                   required
                 />
 
-
                 <Input
                   label="Time Collected"
                   type="time"
@@ -411,27 +353,19 @@ function EditForm({
                   value={formData.timeCollected}
                   onChange={handleChange}
                 />
-
               </div>
-
             </section>
-
 
             {/* PHYSICAL PARAMETERS */}
 
             <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
               <div className="px-6 py-5 border-b border-slate-200">
-
                 <h2 className="font-bold text-slate-800">
                   Physical Parameters
                 </h2>
-
               </div>
 
-
               <div className="grid gap-5 p-6 md:grid-cols-2">
-
                 <Input
                   label="Temperature"
                   unit="°C"
@@ -441,7 +375,6 @@ function EditForm({
                   value={formData.temperature}
                   onChange={handleChange}
                 />
-
 
                 <Input
                   label="Turbidity"
@@ -453,7 +386,6 @@ function EditForm({
                   onChange={handleChange}
                 />
 
-
                 <Input
                   label="Conductivity"
                   unit="µS/cm"
@@ -464,7 +396,6 @@ function EditForm({
                   onChange={handleChange}
                 />
 
-
                 <Input
                   label="Total Dissolved Solids"
                   unit="mg/L"
@@ -474,27 +405,19 @@ function EditForm({
                   value={formData.tds}
                   onChange={handleChange}
                 />
-
               </div>
-
             </section>
-
 
             {/* CHEMICAL PARAMETERS */}
 
             <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
               <div className="px-6 py-5 border-b border-slate-200">
-
                 <h2 className="font-bold text-slate-800">
                   Chemical Parameters
                 </h2>
-
               </div>
 
-
               <div className="grid gap-5 p-6 md:grid-cols-2">
-
                 <Input
                   label="pH"
                   type="number"
@@ -506,7 +429,6 @@ function EditForm({
                   onChange={handleChange}
                 />
 
-
                 <Input
                   label="Dissolved Oxygen"
                   unit="mg/L"
@@ -516,7 +438,6 @@ function EditForm({
                   value={formData.dissolvedOxygen}
                   onChange={handleChange}
                 />
-
 
                 <Input
                   label="Nitrate"
@@ -528,7 +449,6 @@ function EditForm({
                   onChange={handleChange}
                 />
 
-
                 <Input
                   label="Phosphate"
                   unit="mg/L"
@@ -538,27 +458,19 @@ function EditForm({
                   value={formData.phosphate}
                   onChange={handleChange}
                 />
-
               </div>
-
             </section>
-
 
             {/* REMARKS */}
 
             <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
               <div className="px-6 py-5 border-b border-slate-200">
-
                 <h2 className="font-bold text-slate-800">
                   Additional Notes
                 </h2>
-
               </div>
 
-
               <div className="p-6">
-
                 <textarea
                   name="remarks"
                   value={formData.remarks}
@@ -566,16 +478,12 @@ function EditForm({
                   rows="5"
                   className="w-full px-4 py-3 border outline-none resize-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
                 />
-
               </div>
-
             </section>
-
 
             {/* BUTTONS */}
 
             <div className="flex justify-end gap-3">
-
               <Link
                 to="/admin"
                 className="px-6 py-3 font-semibold border rounded-xl text-slate-600 border-slate-200 hover:bg-white"
@@ -583,26 +491,20 @@ function EditForm({
                 Cancel
               </Link>
 
-
               <button
                 type="submit"
-                className="px-8 py-3 font-semibold text-white rounded-xl bg-cyan-600 hover:bg-cyan-700"
+                disabled={saving}
+                className="px-8 py-3 font-semibold text-white rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50"
               >
-                Update Sample
+                {saving ? "Updating..." : "Update Sample"}
               </button>
-
             </div>
-
           </form>
-
         </main>
-
       </div>
-
     </div>
   );
 }
-
 
 /* =================================
    INPUT COMPONENT
@@ -619,13 +521,11 @@ function Input({
   step,
   min,
   max,
+  disabled = false,
 }) {
-
   return (
     <div>
-
       <label className="block mb-2 text-sm font-semibold text-slate-700">
-
         {label}
 
         {unit && (
@@ -633,9 +533,7 @@ function Input({
             ({unit})
           </span>
         )}
-
       </label>
-
 
       <input
         type={type}
@@ -646,12 +544,11 @@ function Input({
         step={step}
         min={min}
         max={max}
-        className="w-full px-4 py-3 border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+        disabled={disabled}
+        className="w-full px-4 py-3 border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 disabled:bg-slate-100 disabled:text-slate-500"
       />
-
     </div>
   );
 }
-
 
 export default EditSample;

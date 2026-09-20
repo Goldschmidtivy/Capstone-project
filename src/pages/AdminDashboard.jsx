@@ -1,31 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const API_URL = "https://water-quality-backend-5br2.onrender.com";
 
 function AdminDashboard() {
   const navigate = useNavigate();
 
   const savedUser = localStorage.getItem("loggedInUser");
 
-  const user = savedUser
-    ? JSON.parse(savedUser)
-    : null;
+  const user = savedUser ? JSON.parse(savedUser) : null;
 
-  const [samples, setSamples] = useState(() => {
-    const savedSamples = localStorage.getItem("waterSamples");
-
-    if (!savedSamples) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedSamples);
-    } catch {
-      return [];
-    }
-  });
+  const [samples, setSamples] = useState([]);
 
   const [formData, setFormData] = useState({
-    sampleId: "",
     waterSource: "",
     location: "",
     dateCollected: "",
@@ -41,6 +28,32 @@ function AdminDashboard() {
     remarks: "",
   });
 
+  const [loading, setLoading] = useState(true);
+
+  // Load samples from backend
+  useEffect(() => {
+    const fetchSamples = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/samples`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load samples");
+        }
+
+        const data = await response.json();
+
+        setSamples(data);
+      } catch (error) {
+        console.error("Error loading samples:", error);
+        alert("Failed to load water samples.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSamples();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -50,53 +63,74 @@ function AdminDashboard() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !formData.sampleId ||
-      !formData.waterSource ||
-      !formData.location
-    ) {
-      alert("Please fill in the Sample ID, Water Source and Location.");
+    if (!formData.waterSource || !formData.location) {
+      alert("Please fill in the Water Source and Location.");
       return;
     }
 
-    const newSample = {
-      ...formData,
-      id: Date.now(),
-    };
+    try {
+      const response = await fetch(`${API_URL}/api/samples`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          location: formData.location,
+          waterSource: formData.waterSource,
+          dateCollected: formData.dateCollected,
+          timeCollected: formData.timeCollected,
+          temperature: formData.temperature,
+          turbidity: formData.turbidity,
+          conductivity: formData.conductivity,
+          TDS: formData.tds,
+          pH: formData.ph,
+          dissolvedOxygen: formData.dissolvedOxygen,
+          nitrate: formData.nitrate,
+          phosphate: formData.phosphate,
+          remarks: formData.remarks,
+        }),
+      });
 
-    const updatedSamples = [...samples, newSample];
+      const data = await response.json();
 
-    setSamples(updatedSamples);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save sample");
+      }
 
-    localStorage.setItem(
-      "waterSamples",
-      JSON.stringify(updatedSamples)
-    );
+      alert(`Water sample saved successfully! Sample ID: ${data.sampleId}`);
 
-    alert("Water sample saved successfully.");
+      // Reload samples from backend
+      const updatedResponse = await fetch(`${API_URL}/api/samples`);
+      const updatedSamples = await updatedResponse.json();
 
-    setFormData({
-      sampleId: "",
-      waterSource: "",
-      location: "",
-      dateCollected: "",
-      timeCollected: "",
-      temperature: "",
-      turbidity: "",
-      conductivity: "",
-      tds: "",
-      ph: "",
-      dissolvedOxygen: "",
-      nitrate: "",
-      phosphate: "",
-      remarks: "",
-    });
+      setSamples(updatedSamples);
+
+      // Clear form
+      setFormData({
+        waterSource: "",
+        location: "",
+        dateCollected: "",
+        timeCollected: "",
+        temperature: "",
+        turbidity: "",
+        conductivity: "",
+        tds: "",
+        ph: "",
+        dissolvedOxygen: "",
+        nitrate: "",
+        phosphate: "",
+        remarks: "",
+      });
+    } catch (error) {
+      console.error("Error saving sample:", error);
+      alert(`Failed to save sample: ${error.message}`);
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (sampleId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this sample?"
     );
@@ -105,16 +139,29 @@ function AdminDashboard() {
       return;
     }
 
-    const updatedSamples = samples.filter(
-      (sample) => sample.id !== id
-    );
+    try {
+      const response = await fetch(
+        `${API_URL}/api/samples/${sampleId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-    setSamples(updatedSamples);
+      const data = await response.json();
 
-    localStorage.setItem(
-      "waterSamples",
-      JSON.stringify(updatedSamples)
-    );
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete sample");
+      }
+
+      alert("Sample deleted successfully.");
+
+      setSamples((previous) =>
+        previous.filter((sample) => sample.sampleId !== sampleId)
+      );
+    } catch (error) {
+      console.error("Error deleting sample:", error);
+      alert(`Failed to delete sample: ${error.message}`);
+    }
   };
 
   const handleLogout = () => {
@@ -128,20 +175,17 @@ function AdminDashboard() {
       {/* NAVBAR */}
 
       <header className="bg-white border-b border-slate-200">
-
         <div className="flex items-center justify-between max-w-7xl px-6 py-4 mx-auto">
 
           <Link
             to="/admin"
             className="flex items-center gap-3"
           >
-
             <div className="flex items-center justify-center w-10 h-10 text-lg text-white rounded-xl bg-cyan-600">
               💧
             </div>
 
             <div>
-
               <h1 className="font-bold text-slate-800">
                 AquaCheck
               </h1>
@@ -149,16 +193,12 @@ function AdminDashboard() {
               <p className="text-xs text-slate-400">
                 Admin Panel
               </p>
-
             </div>
-
           </Link>
-
 
           <div className="flex items-center gap-4">
 
             <div className="hidden text-right sm:block">
-
               <p className="text-sm font-semibold text-slate-700">
                 {user?.name || "Administrator"}
               </p>
@@ -166,18 +206,13 @@ function AdminDashboard() {
               <p className="text-xs text-slate-400">
                 {user?.email || "Admin account"}
               </p>
-
             </div>
 
-
             <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-cyan-100 text-cyan-700">
-
               {user?.name
                 ? user.name.charAt(0).toUpperCase()
                 : "A"}
-
             </div>
-
 
             <button
               onClick={handleLogout}
@@ -187,16 +222,13 @@ function AdminDashboard() {
             </button>
 
           </div>
-
         </div>
-
       </header>
 
 
       {/* MAIN */}
 
       <main className="max-w-7xl px-6 py-8 mx-auto">
-
 
         {/* PAGE HEADER */}
 
@@ -283,15 +315,6 @@ function AdminDashboard() {
 
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
 
-                <InputField
-                  label="Sample ID"
-                  name="sampleId"
-                  value={formData.sampleId}
-                  onChange={handleChange}
-                  placeholder="e.g. 00011"
-                  required
-                />
-
                 <SelectField
                   label="Water Source"
                   name="waterSource"
@@ -354,6 +377,7 @@ function AdminDashboard() {
                   label="Temperature"
                   name="temperature"
                   type="number"
+                  step="0.01"
                   value={formData.temperature}
                   onChange={handleChange}
                   placeholder="e.g. 25"
@@ -469,7 +493,6 @@ function AdminDashboard() {
                 type="button"
                 onClick={() =>
                   setFormData({
-                    sampleId: "",
                     waterSource: "",
                     location: "",
                     dateCollected: "",
@@ -521,7 +544,15 @@ function AdminDashboard() {
           </div>
 
 
-          {samples.length === 0 ? (
+          {loading ? (
+
+            <div className="px-6 py-16 text-center">
+              <p className="text-slate-500">
+                Loading water samples...
+              </p>
+            </div>
+
+          ) : samples.length === 0 ? (
 
             <div className="px-6 py-16 text-center">
 
@@ -587,7 +618,7 @@ function AdminDashboard() {
                   {samples.map((sample) => (
 
                     <tr
-                      key={sample.id}
+                      key={sample.sampleId}
                       className="hover:bg-slate-50"
                     >
 
@@ -608,7 +639,7 @@ function AdminDashboard() {
                       </td>
 
                       <td className="px-5 py-4 font-semibold text-slate-700">
-                        {sample.ph || "—"}
+                        {sample.pH || "—"}
                       </td>
 
                       <td className="px-5 py-4 text-sm text-slate-600">
@@ -618,7 +649,9 @@ function AdminDashboard() {
                       </td>
 
                       <td className="px-5 py-4 text-sm text-slate-600">
-                        {sample.dateCollected || "—"}
+                        {sample.dateCollected
+                          ? sample.dateCollected.split("T")[0]
+                          : "—"}
                       </td>
 
                       <td className="px-5 py-4">
@@ -626,14 +659,14 @@ function AdminDashboard() {
                         <div className="flex gap-2">
 
                           <Link
-                            to={`/samples/${sample.id}`}
+                            to={`/samples/${sample.sampleId}`}
                             className="px-3 py-2 text-xs font-semibold text-cyan-700 rounded-lg bg-cyan-50 hover:bg-cyan-100"
                           >
                             View
                           </Link>
 
                           <Link
-                            to={`/edit-sample/${sample.id}`}
+                            to={`/edit-sample/${sample.sampleId}`}
                             className="px-3 py-2 text-xs font-semibold text-amber-700 rounded-lg bg-amber-50 hover:bg-amber-100"
                           >
                             Edit
@@ -641,7 +674,7 @@ function AdminDashboard() {
 
                           <button
                             onClick={() =>
-                              handleDelete(sample.id)
+                              handleDelete(sample.sampleId)
                             }
                             className="px-3 py-2 text-xs font-semibold text-red-700 rounded-lg bg-red-50 hover:bg-red-100"
                           >
@@ -692,6 +725,7 @@ function InputField({
     <div>
 
       <label className="block mb-2 text-sm font-semibold text-slate-700">
+
         {label}
 
         {required && (
@@ -699,6 +733,7 @@ function InputField({
             *
           </span>
         )}
+
       </label>
 
       <div className="relative">
@@ -817,3 +852,4 @@ function SummaryCard({
 }
 
 export default AdminDashboard;
+

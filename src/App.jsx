@@ -11,7 +11,6 @@ import Login from "./pages/login";
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
         {/* Home */}
@@ -22,10 +21,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* Admin */}
-        <Route
-          path="/admin"
-          element={<AdminDashboard />}
-        />
+        <Route path="/admin" element={<AdminDashboard />} />
 
         <Route
           path="/admin/add-sample"
@@ -38,20 +34,19 @@ function App() {
           element={<UserDashboard />}
         />
 
-        {/* Sample details */}
+        {/* Sample Details */}
         <Route
           path="/samples/:id"
           element={<SampleDetails />}
         />
 
-        {/* Edit sample */}
+        {/* Edit Sample */}
         <Route
-          path="/samples/:id/edit"
+          path="/edit-sample/:id"
           element={<EditSample />}
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }

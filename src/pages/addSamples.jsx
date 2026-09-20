@@ -5,7 +5,6 @@ function AddSamples() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    sampleId: "",
     waterSource: "",
     location: "",
     dateCollected: "",
@@ -30,284 +29,118 @@ function AddSamples() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const newSample = {
-      id: Date.now(),
-      ...formData,
-    };
+  console.log("SUBMIT BUTTON WORKED");
+  alert("Submit function is working");
 
-    const existingData = localStorage.getItem("waterSamples");
+  try {
+      const response = await fetch(
+        "https://water-quality-backend-5br2.onrender.com/api/samples",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            location: formData.location,
+            waterSource: formData.waterSource,
+            dateCollected: formData.dateCollected,
+            timeCollected: formData.timeCollected,
+            temperature: formData.temperature,
+            turbidity: formData.turbidity,
+            conductivity: formData.conductivity,
+            TDS: formData.tds,
+            pH: formData.ph,
+            dissolvedOxygen: formData.dissolvedOxygen,
+            nitrate: formData.nitrate,
+            phosphate: formData.phosphate,
+            remarks: formData.remarks,
+          }),
+        }
+      );
 
-    const existingSamples = existingData
-      ? JSON.parse(existingData)
-      : [];
+      const data = await response.json();
 
-    const updatedSamples = [
-      ...existingSamples,
-      newSample,
-    ];
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save sample");
+      }
 
-    localStorage.setItem(
-      "waterSamples",
-      JSON.stringify(updatedSamples)
-    );
+      alert(`Sample saved successfully! Sample ID: ${data.sampleId}`);
 
-    alert("Sample saved successfully!");
-
-    navigate("/admin");
+      navigate("/admin");
+    } catch (error) {
+      console.error("Error saving sample:", error);
+      alert("Failed to save sample. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white shadow-md p-6">
+        <h1 className="text-xl font-bold text-blue-600 mb-8">
+          Water Quality
+        </h1>
 
-      {/* SIDEBAR */}
-
-      <aside className="fixed top-0 left-0 z-20 hidden w-64 h-screen bg-slate-900 lg:block">
-
-        <div className="flex items-center h-20 px-6 border-b border-slate-800">
-
-          <div className="flex items-center gap-3">
-
-            <div className="flex items-center justify-center w-10 h-10 text-xl text-white rounded-lg bg-cyan-600">
-              💧
-            </div>
-
-            <div>
-
-              <h1 className="font-bold text-white">
-                AquaCheck
-              </h1>
-
-              <p className="text-xs text-slate-400">
-                Water Quality System
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <nav className="p-4 space-y-2">
-
+        <nav className="space-y-4">
           <Link
             to="/admin"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white"
+            className="block text-gray-700 hover:text-blue-600"
           >
-            📊
-            <span>Dashboard</span>
+            Dashboard
           </Link>
-
 
           <Link
             to="/admin/add-sample"
-            className="flex items-center gap-3 px-4 py-3 text-white rounded-lg bg-cyan-600"
+            className="block text-blue-600 font-semibold"
           >
-            🧪
-            <span className="font-medium">
-              Add Sample
-            </span>
+            Add Sample
           </Link>
-
 
           <Link
             to="/user"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white"
+            className="block text-gray-700 hover:text-blue-600"
           >
-            👥
-            <span>User View</span>
+            User View
           </Link>
-
         </nav>
-
-
-        <div className="absolute bottom-0 w-full p-4 border-t border-slate-800">
-
-          <Link
-            to="/"
-            className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white"
-          >
-            ←
-            <span>Back to Website</span>
-          </Link>
-
-        </div>
-
       </aside>
 
-
-      {/* MAIN */}
-
-      <div className="lg:ml-64">
-
-        {/* TOP BAR */}
-
-        <header className="flex items-center justify-between h-20 px-6 bg-white border-b border-slate-200">
-
-          <div>
-
-            <h2 className="text-xl font-bold text-slate-800">
+      {/* Main Content */}
+      <main className="flex-1 p-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-800">
               Add Water Sample
             </h2>
 
-            <p className="hidden text-sm text-slate-500 sm:block">
-              Record a new water quality sample
+            <p className="text-gray-600 mt-2">
+              Enter the water quality information below.
             </p>
-
           </div>
 
+          <form onSubmit={handleSubmit}>
+            {/* Sample Information */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-5">
+                Sample Information
+              </h3>
 
-          <div className="flex items-center gap-3">
-
-            <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-cyan-100 text-cyan-700">
-              A
-            </div>
-
-            <div className="hidden sm:block">
-
-              <p className="text-sm font-semibold text-slate-700">
-                Administrator
-              </p>
-
-              <p className="text-xs text-slate-400">
-                Admin
-              </p>
-
-            </div>
-
-          </div>
-
-        </header>
-
-
-        {/* CONTENT */}
-
-        <main className="max-w-6xl p-6 mx-auto md:p-8">
-
-          {/* PAGE TITLE */}
-
-          <div className="mb-8">
-
-            <Link
-              to="/admin"
-              className="inline-flex items-center gap-2 mb-4 text-sm font-medium text-cyan-600 hover:text-cyan-700"
-            >
-              ← Back to Dashboard
-            </Link>
-
-            <h1 className="text-3xl font-bold text-slate-900">
-              Add Water Sample
-            </h1>
-
-            <p className="mt-2 text-slate-500">
-              Enter the information collected from your water sample.
-            </p>
-
-          </div>
-
-
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
-
-            {/* SAMPLE INFORMATION */}
-
-            <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
-              <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200">
-
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-cyan-50">
-                  📋
-                </div>
-
-                <div>
-
-                  <h2 className="font-bold text-slate-800">
-                    Sample Information
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    Basic information about the sample
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              <div className="grid gap-5 p-6 md:grid-cols-2">
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Input
-                  label="Sample ID"
-                  name="sampleId"
-                  value={formData.sampleId}
+                  label="Water Source"
+                  name="waterSource"
+                  value={formData.waterSource}
                   onChange={handleChange}
-                  placeholder="e.g. WQ-001"
+                  placeholder="e.g. Lake, River, Borehole"
                   required
                 />
 
-
-                <div>
-
-                  <label className="block mb-2 text-sm font-semibold text-slate-700">
-                    Water Source
-                  </label>
-
-                  <select
-                    name="waterSource"
-                    value={formData.waterSource}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 transition bg-white border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
-                  >
-
-                    <option value="">
-                      Select water source
-                    </option>
-
-                    <option value="Borehole">
-                      Borehole
-                    </option>
-
-                    <option value="Well">
-                      Well
-                    </option>
-
-                    <option value="River">
-                      River
-                    </option>
-
-                    <option value="Stream">
-                      Stream
-                    </option>
-
-                    <option value="Lake">
-                      Lake
-                    </option>
-
-                    <option value="Dam">
-                      Dam
-                    </option>
-
-                    <option value="Tap Water">
-                      Tap Water
-                    </option>
-
-                    <option value="Other">
-                      Other
-                    </option>
-
-                  </select>
-
-                </div>
-
-
                 <Input
-                  label="Sampling Location"
+                  label="Location"
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
@@ -315,305 +148,198 @@ function AddSamples() {
                   required
                 />
 
-
                 <Input
                   label="Date Collected"
-                  type="date"
                   name="dateCollected"
+                  type="date"
                   value={formData.dateCollected}
                   onChange={handleChange}
                   required
                 />
 
-
                 <Input
                   label="Time Collected"
-                  type="time"
                   name="timeCollected"
+                  type="time"
                   value={formData.timeCollected}
                   onChange={handleChange}
-                />
-
-              </div>
-
-            </section>
-
-
-            {/* PHYSICAL PARAMETERS */}
-
-            <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
-              <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200">
-
-                <div className="flex items-center justify-center w-10 h-10 text-xl rounded-lg bg-blue-50">
-                  🌡️
-                </div>
-
-                <div>
-
-                  <h2 className="font-bold text-slate-800">
-                    Physical Parameters
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    Physical characteristics of the water
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              <div className="grid gap-5 p-6 md:grid-cols-2">
-
-                <Input
-                  label="Temperature"
-                  unit="°C"
-                  type="number"
-                  step="0.01"
-                  name="temperature"
-                  value={formData.temperature}
-                  onChange={handleChange}
-                  placeholder="e.g. 25.4"
-                />
-
-
-                <Input
-                  label="Turbidity"
-                  unit="NTU"
-                  type="number"
-                  step="0.01"
-                  name="turbidity"
-                  value={formData.turbidity}
-                  onChange={handleChange}
-                  placeholder="e.g. 2.5"
-                />
-
-
-                <Input
-                  label="Electrical Conductivity"
-                  unit="µS/cm"
-                  type="number"
-                  step="0.01"
-                  name="conductivity"
-                  value={formData.conductivity}
-                  onChange={handleChange}
-                  placeholder="e.g. 450"
-                />
-
-
-                <Input
-                  label="Total Dissolved Solids"
-                  unit="mg/L"
-                  type="number"
-                  step="0.01"
-                  name="tds"
-                  value={formData.tds}
-                  onChange={handleChange}
-                  placeholder="e.g. 300"
-                />
-
-              </div>
-
-            </section>
-
-
-            {/* CHEMICAL PARAMETERS */}
-
-            <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
-              <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-200">
-
-                <div className="flex items-center justify-center w-10 h-10 text-xl rounded-lg bg-emerald-50">
-                  🧪
-                </div>
-
-                <div>
-
-                  <h2 className="font-bold text-slate-800">
-                    Chemical Parameters
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    Chemical measurements of the water
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              <div className="grid gap-5 p-6 md:grid-cols-2">
-
-                <Input
-                  label="pH"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="14"
-                  name="ph"
-                  value={formData.ph}
-                  onChange={handleChange}
-                  placeholder="e.g. 7.2"
                   required
                 />
-
-
-                <Input
-                  label="Dissolved Oxygen"
-                  unit="mg/L"
-                  type="number"
-                  step="0.01"
-                  name="dissolvedOxygen"
-                  value={formData.dissolvedOxygen}
-                  onChange={handleChange}
-                  placeholder="e.g. 7.5"
-                />
-
-
-                <Input
-                  label="Nitrate"
-                  unit="mg/L"
-                  type="number"
-                  step="0.01"
-                  name="nitrate"
-                  value={formData.nitrate}
-                  onChange={handleChange}
-                  placeholder="e.g. 5.2"
-                />
-
-
-                <Input
-                  label="Phosphate"
-                  unit="mg/L"
-                  type="number"
-                  step="0.01"
-                  name="phosphate"
-                  value={formData.phosphate}
-                  onChange={handleChange}
-                  placeholder="e.g. 0.8"
-                />
-
               </div>
-
-            </section>
-
-
-            {/* REMARKS */}
-
-            <section className="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200">
-
-              <div className="px-6 py-5 border-b border-slate-200">
-
-                <h2 className="font-bold text-slate-800">
-                  Additional Notes
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Add observations or comments about the sample
-                </p>
-
-              </div>
-
-
-              <div className="p-6">
-
-                <textarea
-                  name="remarks"
-                  value={formData.remarks}
-                  onChange={handleChange}
-                  rows="5"
-                  placeholder="Enter any observations, unusual characteristics, or other notes..."
-                  className="w-full px-4 py-3 transition border outline-none resize-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
-                />
-
-              </div>
-
-            </section>
-
-
-            {/* ACTIONS */}
-
-            <div className="flex flex-col justify-end gap-3 pt-2 sm:flex-row">
-
-              <Link
-                to="/admin"
-                className="px-6 py-3 font-semibold text-center transition border rounded-xl text-slate-600 border-slate-200 hover:bg-white"
-              >
-                Cancel
-              </Link>
-
-
-              <button
-                type="submit"
-                className="px-8 py-3 font-semibold text-white transition shadow-lg rounded-xl bg-cyan-600 shadow-cyan-100 hover:bg-cyan-700"
-              >
-                Save Water Sample
-              </button>
-
             </div>
 
+            {/* Physical Parameters */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-5">
+                Physical Parameters
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Input
+                  label="Temperature (°C)"
+                  name="temperature"
+                  type="number"
+                  step="0.01"
+                  value={formData.temperature}
+                  onChange={handleChange}
+                  placeholder="e.g. 27.50"
+                />
+
+                <Input
+                  label="Turbidity (NTU)"
+                  name="turbidity"
+                  type="number"
+                  step="0.01"
+                  value={formData.turbidity}
+                  onChange={handleChange}
+                  placeholder="e.g. 3.50"
+                />
+
+                <Input
+                  label="Conductivity (µS/cm)"
+                  name="conductivity"
+                  type="number"
+                  step="0.01"
+                  value={formData.conductivity}
+                  onChange={handleChange}
+                  placeholder="e.g. 120.00"
+                />
+
+                <Input
+                  label="TDS (mg/L)"
+                  name="tds"
+                  type="number"
+                  step="0.01"
+                  value={formData.tds}
+                  onChange={handleChange}
+                  placeholder="e.g. 80.00"
+                />
+              </div>
+            </div>
+
+            {/* Chemical Parameters */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-5">
+                Chemical Parameters
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Input
+                  label="pH"
+                  name="ph"
+                  type="number"
+                  step="0.01"
+                  value={formData.ph}
+                  onChange={handleChange}
+                  placeholder="e.g. 7.20"
+                />
+
+                <Input
+                  label="Dissolved Oxygen (mg/L)"
+                  name="dissolvedOxygen"
+                  type="number"
+                  step="0.01"
+                  value={formData.dissolvedOxygen}
+                  onChange={handleChange}
+                  placeholder="e.g. 6.80"
+                />
+
+                <Input
+                  label="Nitrate (mg/L)"
+                  name="nitrate"
+                  type="number"
+                  step="0.01"
+                  value={formData.nitrate}
+                  onChange={handleChange}
+                  placeholder="e.g. 2.10"
+                />
+
+                <Input
+                  label="Phosphate (mg/L)"
+                  name="phosphate"
+                  type="number"
+                  step="0.01"
+                  value={formData.phosphate}
+                  onChange={handleChange}
+                  placeholder="e.g. 0.50"
+                />
+              </div>
+            </div>
+
+            {/* Remarks */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-5">
+                Remarks
+              </h3>
+
+              <textarea
+                name="remarks"
+                value={formData.remarks}
+                onChange={handleChange}
+                placeholder="Enter any additional observations or remarks..."
+                rows="5"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/admin")}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+  type="submit"
+  onClick={() => alert("SAVE BUTTON CLICKED")}
+  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+>
+  Save Sample
+</button>
+            </div>
           </form>
-
-        </main>
-
-      </div>
-
+        </div>
+      </main>
     </div>
   );
 }
 
-
-/* =================================
-   REUSABLE INPUT COMPONENT
-================================= */
-
+/* Reusable Input Component */
 function Input({
   label,
-  unit,
-  type = "text",
   name,
+  type = "text",
   value,
   onChange,
   placeholder,
   required = false,
-  min,
-  max,
-  step,
 }) {
-
   return (
     <div>
-
-      <label className="block mb-2 text-sm font-semibold text-slate-700">
-
+      <label
+        htmlFor={name}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
         {label}
-
-        {unit && (
-          <span className="ml-1 font-normal text-slate-400">
-            ({unit})
-          </span>
-        )}
-
       </label>
 
-
       <input
-        type={type}
+        id={name}
         name={name}
+        type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        min={min}
-        max={max}
-        step={step}
-        className="w-full px-4 py-3 transition border outline-none rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+        step={type === "number" ? "0.01" : undefined}
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-
     </div>
   );
 }
 
-
 export default AddSamples;
+

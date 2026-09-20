@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function Login() {
+const API_URL = "https://water-quality-backend-5br2.onrender.com";
 
+export default function Login() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] =  useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
+  const [loading, setLoading] = useState(false);
 
-
-  const handleSubmit = (e) => {
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -19,80 +19,83 @@ export default function Login() {
       return;
     }
 
+    try {
+      setLoading(true);
 
-    /*
-      Get registered users
-    */
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    const savedUsers = localStorage.getItem("users");
+      const data = await response.json();
 
-    const users = savedUsers
-      ? JSON.parse(savedUsers)
-      : [];
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Login failed."
+        );
+      }
 
+      /*
+        Check that the selected account type
+        matches the actual role from the database.
+      */
 
-    /*
-      Find matching account
-    */
+      if (data.user.role !== role) {
+        alert(
+          `This account is registered as ${data.user.role}. Please select ${data.user.role} to continue.`
+        );
 
-    const user = users.find(
-      (item) =>
-        item.email === email &&
-        item.password === password &&
-        item.role === role
-    );
+        return;
+      }
 
+      /*
+        Save the JWT token
+      */
 
-    /*
-      If no account exists
-    */
-
-    if (!user) {
-
-      alert(
-        "Account not found. Please check your details or create an account."
+      localStorage.setItem(
+        "authToken",
+        data.token
       );
 
-      return;
+      /*
+        Save the logged-in user
+      */
+
+      localStorage.setItem(
+        "loggedInUser",
+        JSON.stringify(data.user)
+      );
+
+      /*
+        Redirect according to the actual role
+      */
+
+      if (data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/user");
+      }
+
+    } catch (error) {
+      console.error("Login error:", error);
+
+      alert(
+        error.message ||
+        "Unable to sign in. Please check your details."
+      );
+    } finally {
+      setLoading(false);
     }
-
-
-    /*
-      Save currently logged-in user
-    */
-
-    localStorage.setItem(
-      "loggedInUser",
-      JSON.stringify({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      })
-    );
-
-
-    /*
-      Redirect according to role
-    */
-
-    if (user.role === "admin") {
-
-      navigate("/admin");
-
-    } else {
-
-      navigate("/user");
-
-    }
-
   };
 
-
   return (
-
     <div className="flex min-h-screen bg-slate-50">
-
 
       {/* =================================
           LEFT SIDE
@@ -101,7 +104,6 @@ export default function Login() {
       <div className="relative hidden w-1/2 overflow-hidden bg-slate-900 lg:flex">
 
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-700 via-cyan-900 to-slate-950" />
-
 
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
 
@@ -125,7 +127,6 @@ export default function Login() {
 
           </div>
 
-
           <h2 className="max-w-lg text-4xl font-bold leading-tight">
 
             Monitor water quality.
@@ -134,7 +135,6 @@ export default function Login() {
             Protect our water resources.
 
           </h2>
-
 
           <p className="max-w-lg mt-6 text-lg leading-relaxed text-cyan-100">
 
@@ -149,7 +149,6 @@ export default function Login() {
       </div>
 
 
-
       {/* =================================
           RIGHT SIDE
       ================================= */}
@@ -157,7 +156,6 @@ export default function Login() {
       <div className="flex items-center justify-center w-full px-6 py-12 lg:w-1/2">
 
         <div className="w-full max-w-md">
-
 
           {/* MOBILE LOGO */}
 
@@ -178,7 +176,6 @@ export default function Login() {
           </div>
 
 
-
           {/* TITLE */}
 
           <div className="mb-8">
@@ -194,14 +191,12 @@ export default function Login() {
           </div>
 
 
-
           {/* FORM */}
 
           <form
             onSubmit={handleSubmit}
             className="space-y-5"
           >
-
 
             {/* EMAIL */}
 
@@ -222,7 +217,6 @@ export default function Login() {
               />
 
             </div>
-
 
 
             {/* PASSWORD */}
@@ -246,7 +240,6 @@ export default function Login() {
             </div>
 
 
-
             {/* ROLE */}
 
             <div>
@@ -255,9 +248,7 @@ export default function Login() {
                 Sign in as
               </label>
 
-
               <div className="grid grid-cols-2 gap-3">
-
 
                 {/* USER */}
 
@@ -284,7 +275,6 @@ export default function Login() {
                   </p>
 
                 </button>
-
 
 
                 {/* ADMIN */}
@@ -318,18 +308,17 @@ export default function Login() {
             </div>
 
 
-
             {/* BUTTON */}
 
             <button
               type="submit"
-              className="w-full py-3.5 font-semibold text-white transition rounded-xl bg-cyan-600 hover:bg-cyan-700"
+              disabled={loading}
+              className="w-full py-3.5 font-semibold text-white transition rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </button>
 
           </form>
-
 
 
           {/* SIGN UP */}
@@ -346,7 +335,6 @@ export default function Login() {
             </Link>
 
           </p>
-
 
 
           {/* HOME */}
@@ -367,6 +355,5 @@ export default function Login() {
       </div>
 
     </div>
-
   );
 }
